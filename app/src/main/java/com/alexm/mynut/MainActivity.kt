@@ -21,6 +21,7 @@ import com.alexm.mynut.ui.home.HomeViewModel
 import com.alexm.mynut.ui.theme.MyNutTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

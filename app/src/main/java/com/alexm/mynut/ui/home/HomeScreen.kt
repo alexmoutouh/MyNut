@@ -113,7 +113,7 @@ fun HomeScreen(
                 )
             }
 
-            items(filteredItems, key = { it.id }) { item ->
+            items(filteredItems, key = { "item_${it.id}" }) { item ->
                 NutItemCard(
                     item = item,
                     onClick = { portionDialog = item },
@@ -160,7 +160,7 @@ fun HomeScreen(
                 }
             }
 
-            items(dailyEntries, key = { it.entry.id }) { entryWithItem ->
+            items(dailyEntries, key = { "entry_${it.entry.id}" }) { entryWithItem ->
                 DailyEntryRow(
                     entryWithItem = entryWithItem,
                     onDelete = { viewModel.removeEntry(entryWithItem.entry) }
