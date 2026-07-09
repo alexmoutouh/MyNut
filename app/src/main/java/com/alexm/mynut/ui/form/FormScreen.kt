@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -60,13 +62,20 @@ fun FormScreen(
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
+    var pendingScanMode by remember { mutableStateOf(ScanMode.HTTP) }
+
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
             photoUri?.let { uri ->
                 val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
-                if (bytes != null) viewModel.scanPhoto(bytes)
+                if (bytes != null) {
+                    when (pendingScanMode) {
+                        ScanMode.HTTP -> viewModel.scanPhoto(bytes)
+                        ScanMode.LOCAL -> viewModel.scanPhotoLocally(bytes)
+                    }
+                }
             }
         }
     }
@@ -76,7 +85,12 @@ fun FormScreen(
     ) { uri: Uri? ->
         uri?.let {
             val bytes = context.contentResolver.openInputStream(it)?.readBytes()
-            if (bytes != null) viewModel.scanPhoto(bytes)
+            if (bytes != null) {
+                when (pendingScanMode) {
+                    ScanMode.HTTP -> viewModel.scanPhoto(bytes)
+                    ScanMode.LOCAL -> viewModel.scanPhotoLocally(bytes)
+                }
+            }
         }
     }
 
@@ -110,11 +124,24 @@ fun FormScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showPhotoChoice = true }) {
-                        if (uiState.scanInProgress) {
+                    IconButton(onClick = {
+                        pendingScanMode = ScanMode.HTTP
+                        showPhotoChoice = true
+                    }) {
+                        if (uiState.scanInProgress && pendingScanMode == ScanMode.HTTP) {
                             CircularProgressIndicator()
                         } else {
-                            Icon(Icons.Default.CameraAlt, contentDescription = "Scanner une étiquette")
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Scanner une étiquette (API)")
+                        }
+                    }
+                    IconButton(onClick = {
+                        pendingScanMode = ScanMode.LOCAL
+                        showPhotoChoice = true
+                    }) {
+                        if (uiState.scanInProgress && pendingScanMode == ScanMode.LOCAL) {
+                            CircularProgressIndicator()
+                        } else {
+                            Icon(Icons.Default.Memory, contentDescription = "Scanner une étiquette (IA locale)")
                         }
                     }
                 }
@@ -130,6 +157,13 @@ fun FormScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            uiState.modelDownloadProgress?.let { progress ->
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = { viewModel.updateField("name", it) },
@@ -203,7 +237,23 @@ fun FormScreen(
             }
         )
     }
+
+    if (uiState.showModelDownloadConfirm) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelModelDownload() },
+            title = { Text("Télécharger le modèle IA") },
+            text = { Text("Le modèle IA (~1 Go) doit être téléchargé une fois pour activer le scan local. Continuer ?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmModelDownload() }) { Text("Télécharger") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelModelDownload() }) { Text("Annuler") }
+            }
+        )
+    }
 }
+
+private enum class ScanMode { HTTP, LOCAL }
 
 @Composable
 private fun NutrientField(
