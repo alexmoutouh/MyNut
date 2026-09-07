@@ -13,6 +13,7 @@ private const val KNOWN_CONTENT = "contenu de test connu"
 private val KNOWN_SHA256 = MessageDigest.getInstance("SHA-256")
     .digest(KNOWN_CONTENT.toByteArray())
     .joinToString("") { "%02x".format(it) }
+private const val TEST_FILENAME = "test-model.gguf"
 
 private class FakeDownloader(
     private val contentToWrite: String = KNOWN_CONTENT,
@@ -37,10 +38,11 @@ class LocalModelManagerTest {
         val manager = LocalModelManager(
             modelsDir = modelsDir,
             downloader = FakeDownloader(),
+            modelFilename = TEST_FILENAME,
             modelUrl = "https://example.test/model.gguf",
             expectedSha256 = KNOWN_SHA256
         )
-        File(modelsDir, LocalModelManager.MODEL_FILENAME).writeText(KNOWN_CONTENT)
+        File(modelsDir, TEST_FILENAME).writeText(KNOWN_CONTENT)
 
         assertTrue(manager.isModelReady())
         val result = manager.ensureModelReady()
@@ -53,6 +55,7 @@ class LocalModelManagerTest {
         val manager = LocalModelManager(
             modelsDir = modelsDir,
             downloader = FakeDownloader(),
+            modelFilename = TEST_FILENAME,
             modelUrl = "https://example.test/model.gguf",
             expectedSha256 = KNOWN_SHA256
         )
@@ -69,6 +72,7 @@ class LocalModelManagerTest {
         val manager = LocalModelManager(
             modelsDir = modelsDir,
             downloader = FakeDownloader(contentToWrite = "contenu different"),
+            modelFilename = TEST_FILENAME,
             modelUrl = "https://example.test/model.gguf",
             expectedSha256 = KNOWN_SHA256
         )
@@ -85,6 +89,7 @@ class LocalModelManagerTest {
         val manager = LocalModelManager(
             modelsDir = modelsDir,
             downloader = FakeDownloader(shouldFail = java.io.IOException("pas de réseau")),
+            modelFilename = TEST_FILENAME,
             modelUrl = "https://example.test/model.gguf",
             expectedSha256 = KNOWN_SHA256
         )

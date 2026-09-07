@@ -11,13 +11,14 @@ import java.security.MessageDigest
 class LocalModelManager(
     private val modelsDir: File,
     private val downloader: ModelDownloader,
-    private val modelUrl: String = MODEL_URL,
-    private val expectedSha256: String = MODEL_SHA256
+    private val modelFilename: String,
+    private val modelUrl: String,
+    private val expectedSha256: String
 ) {
     private val _state = MutableStateFlow<ModelDownloadState>(ModelDownloadState.Idle)
     val state: StateFlow<ModelDownloadState> = _state.asStateFlow()
 
-    val modelFile: File get() = File(modelsDir, MODEL_FILENAME)
+    val modelFile: File get() = File(modelsDir, modelFilename)
 
     fun isModelReady(): Boolean = modelFile.exists() && verifyChecksum(modelFile, expectedSha256)
 
@@ -29,7 +30,7 @@ class LocalModelManager(
 
         _state.value = ModelDownloadState.Downloading(0f)
         modelsDir.mkdirs()
-        val tempFile = File(modelsDir, "$MODEL_FILENAME.tmp")
+        val tempFile = File(modelsDir, "$modelFilename.tmp")
 
         try {
             downloader.download(modelUrl, tempFile) { progress ->
@@ -38,7 +39,7 @@ class LocalModelManager(
             if (!verifyChecksum(tempFile, expectedSha256)) {
                 tempFile.delete()
                 _state.value = ModelDownloadState.Failed("Fichier téléchargé corrompu")
-                return@withContext Result.failure(IllegalStateException("Checksum invalide pour $MODEL_FILENAME"))
+                return@withContext Result.failure(IllegalStateException("Checksum invalide pour $modelFilename"))
             }
             tempFile.renameTo(modelFile)
             _state.value = ModelDownloadState.Ready
@@ -62,11 +63,5 @@ class LocalModelManager(
         }
         val hash = digest.digest().joinToString("") { "%02x".format(it) }
         return hash.equals(expected, ignoreCase = true)
-    }
-
-    companion object {
-        const val MODEL_FILENAME = "qwen2.5-1.5b-instruct-q4_k_m.gguf"
-        const val MODEL_URL = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
-        const val MODEL_SHA256 = "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
     }
 }

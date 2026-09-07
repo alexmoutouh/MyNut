@@ -8,6 +8,7 @@ set(GGML_CPU_ALL_VARIANTS ON CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(LLAMA_BUILD_MTMD ON CACHE BOOL "" FORCE)
 set(LLAMA_CURL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${LLAMA_SRC} build-llama)
@@ -17,10 +18,12 @@ add_library(mynut_llm SHARED mynut_llm_jni.cpp)
 target_include_directories(mynut_llm PRIVATE
     ${LLAMA_SRC}/include
     ${LLAMA_SRC}/ggml/include
+    ${LLAMA_SRC}/tools/mtmd
 )
 
 target_link_libraries(mynut_llm
     llama
+    mtmd
     android
     log
 )

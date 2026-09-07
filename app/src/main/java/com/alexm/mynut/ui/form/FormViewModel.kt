@@ -40,7 +40,7 @@ class FormViewModel(
     private val app = application as MyNutApplication
     private val nutItemDao = app.database.nutItemDao()
     private val labelScanApi = app.labelScanApi
-    private val ocrTextLlmScanEngine = app.ocrTextLlmScanEngine
+    private val vlmScanEngine = app.vlmScanEngine
     private val localModelManager = app.localModelManager
     private var pendingLocalScanBytes: ByteArray? = null
 
@@ -165,7 +165,7 @@ class FormViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(scanInProgress = true, errorMessage = null)
 
-            ocrTextLlmScanEngine.scanLabel(imageBytes).fold(
+            vlmScanEngine.scanLabel(imageBytes).fold(
                 onSuccess = { values ->
                     _uiState.value = _uiState.value.copy(
                         calories = values.calories?.toString() ?: _uiState.value.calories,

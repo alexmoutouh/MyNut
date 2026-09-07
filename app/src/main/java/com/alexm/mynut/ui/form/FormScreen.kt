@@ -242,7 +242,7 @@ fun FormScreen(
         AlertDialog(
             onDismissRequest = { viewModel.cancelModelDownload() },
             title = { Text("Télécharger le modèle IA") },
-            text = { Text("Le modèle IA (~1 Go) doit être téléchargé une fois pour activer le scan local. Continuer ?") },
+            text = { Text("Le modèle IA (~3 Go) doit être téléchargé une fois pour activer le scan local. Continuer ?") },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmModelDownload() }) { Text("Télécharger") }
             },
